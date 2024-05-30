@@ -194,7 +194,7 @@ int toggleProxy(bool turnOn)
 
 void usage(const char* binName)
 {
-  printf("Usage: %s [show | on | off | wait-and-cleanup <proxy host> <proxy port>]\n", binName);
+  printf("Usage: %s [show | on | off | wait-and-cleanup <proxy host> <proxy port>] | getbypass <service> | setbypass <service> <list> \n", binName);
   exit(INVALID_FORMAT);
 }
 
@@ -216,6 +216,32 @@ void setupSignals(void)
   signal(SIGSEGV, turnOffProxyOnSignal);
 }
 
+int getbypass(char *service)
+{
+    char cmd[1024];
+    sprintf(cmd, "/usr/sbin/networksetup -getproxybypassdomains %s", service);
+    system(cmd);
+    return 0;
+}
+
+int setbypass(char *service, char *list) {
+    char cmd[1024];
+    setuid(0);
+    sprintf(cmd, "/usr/sbin/networksetup -setproxybypassdomains %s %s", service, list);
+    printf("cmd: %s\n", cmd);
+    system(cmd);
+    return 0;
+}
+    
+int unsetbypass(char *service) {
+    char cmd[128];
+    setuid(0);
+    sprintf(cmd, "/usr/sbin/networksetup -setproxybypassdomains %s \"\"", service);
+    printf("cmd: %s\n", cmd);
+    system(cmd);
+    return 0;
+}
+
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
         if (argc < 2) {
@@ -228,6 +254,12 @@ int main(int argc, const char * argv[]) {
 
         if (strcmp(argv[1], "show") == 0) {
           return show();
+        } else if (strcmp(argv[1], "getbypass") == 0) {
+            return getbypass((char *)(argv[2]));
+        } else if (strcmp(argv[1], "setbypass") == 0) {
+            return setbypass((char *)(argv[2]), (char *)(argv[3]));
+        } else if (strcmp(argv[1], "unsetbypass") == 0){
+            return unsetbypass((char *)(argv[2]));
         } else {
           if (argc < 4) {
             usage(argv[0]);
